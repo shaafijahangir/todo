@@ -1,12 +1,14 @@
 const express = require('express');
-const Task = require('../models/Task');
-const auth = require('../middleware/auth');
 const router = express.Router();
+const auth = require('../middleware/auth');  // Middleware to verify JWT
+const Task = require('../models/Task');
 
-// Get all tasks
+// @route    GET api/tasks
+// @desc     Get all tasks for the logged-in user
+// @access   Private
 router.get('/', auth, async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.user.id });
+    const tasks = await Task.find({ user: req.user.id });  // Fetch tasks for the user
     res.json(tasks);
   } catch (err) {
     console.error(err.message);
@@ -14,16 +16,18 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Create a new task
+// @route    POST api/tasks
+// @desc     Create a task
+// @access   Private
 router.post('/', auth, async (req, res) => {
-  const { title, description, dueDate } = req.body;
-
   try {
+    const { title, description, dueDate } = req.body;
+
     const newTask = new Task({
       title,
       description,
       dueDate,
-      user: req.user.id,
+      user: req.user.id  // Associate task with the logged-in user
     });
 
     const task = await newTask.save();
@@ -34,25 +38,52 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update a task
-router.put('/:id', auth, async (req, res) => {
-  const { title, description, dueDate, completed } = req.body;
-
+// @route    DELETE api/tasks/:id
+// @desc     Delete a task
+// @access   Private
+router.delete('/:id', auth, async (req, res) => {
   try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ msg: 'Task not found' });
+    }
+
+    // Check if the task belongs to the logged-in user
+    if (task.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'Not authorized' });
+    }
+
+    await task.remove();
+    res.json({ msg: 'Task removed' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route    PUT api/tasks/:id
+// @desc     Update a task's title, description, and due date
+// @access   Private
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { title, description, dueDate } = req.body;
+
     let task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({ msg: 'Task not found' });
     }
 
-    // Ensure user owns task
+    // Ensure the task belongs to the logged-in user
     if (task.user.toString() !== req.user.id) {
       return res.status(401).json({ msg: 'Not authorized' });
     }
 
+    // Update task fields
     task = await Task.findByIdAndUpdate(
       req.params.id,
-      { $set: { title, description, dueDate, completed } },
+      { title, description, dueDate },
       { new: true }
     );
 
@@ -63,8 +94,10 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// Delete a task
-router.delete('/:id', auth, async (req, res) => {
+// @route    PUT api/tasks/:id/complete
+// @desc     Toggle task completion status
+// @access   Private
+router.put('/:id/complete', auth, async (req, res) => {
   try {
     let task = await Task.findById(req.params.id);
 
@@ -72,14 +105,16 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ msg: 'Task not found' });
     }
 
-    // Ensure user owns task
+    // Ensure the task belongs to the logged-in user
     if (task.user.toString() !== req.user.id) {
       return res.status(401).json({ msg: 'Not authorized' });
     }
 
-    await Task.findByIdAndDelete(req.params.id);
+    // Toggle the completed status
+    task.completed = !task.completed;
+    await task.save();
 
-    res.json({ msg: 'Task removed' });
+    res.json(task);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');

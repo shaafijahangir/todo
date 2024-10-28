@@ -9,6 +9,8 @@ function Register() {
     password: '',
   });
 
+  const [errors, setErrors] = useState([]); // To handle and display validation errors
+
   const navigate = useNavigate();
 
   const { username, email, password } = formData;
@@ -22,22 +24,36 @@ function Register() {
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', formData);
       if (res && res.data) {
-        const { createdAt } = res.data;  // Get createdAt from the response
-        console.log('User registered at:', createdAt);
-        navigate('/login'); // Redirect to login page
+        // Store the token in localStorage
+        localStorage.setItem('token', res.data.token);
+        console.log('User registered and logged in at:', res.data.createdAt); // Log user creation time
+        navigate('/dashboard'); // Redirect to the dashboard after registration
       } else {
         console.error('Registration failed: No data returned');
       }
     } catch (err) {
-      console.error('Error during registration:', err.response ? err.response.data : err.message);
+      if (err.response && err.response.data.errors) {
+        setErrors(err.response.data.errors); // Set validation errors
+      } else {
+        console.error('Error during registration:', err.response ? err.response.data : err.message);
+      }
     }
   };
-  
 
   return (
     <div>
       <h2>Register</h2>
       <form onSubmit={onSubmit}>
+        {/* Display validation errors if any */}
+        {errors.length > 0 && (
+          <ul>
+            {errors.map((error, index) => (
+              <li key={index} style={{ color: 'red' }}>
+                {error.msg}
+              </li>
+            ))}
+          </ul>
+        )}
         <div>
           <label>Username</label>
           <input type="text" name="username" value={username} onChange={onChange} required />

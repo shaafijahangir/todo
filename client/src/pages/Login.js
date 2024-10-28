@@ -8,6 +8,8 @@ function Login() {
     password: '',
   });
 
+  const [error, setError] = useState(''); // For displaying login errors
+
   const navigate = useNavigate();
 
   const { email, password } = formData;
@@ -21,10 +23,10 @@ function Login() {
     try {
       const res = await axios.post('http://localhost:5000/api/auth/login', formData);
       console.log('User logged in:', res.data);
-      localStorage.setItem('token', res.data.token);
-      navigate('/'); // Redirect to home page
+      localStorage.setItem('token', res.data.token); // Store the token in localStorage
+      navigate('/dashboard'); // Redirect to dashboard
     } catch (err) {
-      console.error('Error during login:', err.response.data);
+      setError(err.response ? err.response.data.msg : 'Server error'); // Set error message
     }
   };
 
@@ -32,6 +34,8 @@ function Login() {
     <div>
       <h2>Login</h2>
       <form onSubmit={onSubmit}>
+        {/* Display error if login fails */}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         <div>
           <label>Email</label>
           <input type="email" name="email" value={email} onChange={onChange} required />
