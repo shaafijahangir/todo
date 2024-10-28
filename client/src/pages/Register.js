@@ -22,7 +22,8 @@ function Register() {
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', formData);
       if (res && res.data) {
-        console.log('User registered:', res.data);
+        const { createdAt } = res.data;  // Get createdAt from the response
+        console.log('User registered at:', createdAt);
         navigate('/login'); // Redirect to login page
       } else {
         console.error('Registration failed: No data returned');
@@ -31,6 +32,7 @@ function Register() {
       console.error('Error during registration:', err.response ? err.response.data : err.message);
     }
   };
+  
 
   return (
     <div>

@@ -14,15 +14,24 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ msg: 'User already exists' });
     }
 
+    // Create new user
     user = new User({ username, email, password });
 
+    // Save the user to the database
     await user.save();
 
+    // Prepare the JWT payload
     const payload = { user: { id: user.id } };
 
+    // Sign the JWT token
     jwt.sign(payload, 'yourSecretKey', { expiresIn: 360000 }, (err, token) => {
       if (err) throw err;
-      res.json({ token });
+      
+      // Respond with token and creation time
+      res.json({
+        token,          // Return the JWT token
+        createdAt: user.createdAt  // Return the timestamp of when the user was created
+      });
     });
   } catch (err) {
     console.error(err.message);
