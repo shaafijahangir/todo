@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 const User = require('../models/User');
 const router = express.Router();
+const config = require('config');
 
 // Register a new user
 router.post(
@@ -41,10 +42,10 @@ router.post(
       // Prepare the JWT payload
       const payload = { user: { id: user.id } };
 
-      // Sign the JWT token
-      jwt.sign(payload, 'yourSecretKey', { expiresIn: 360000 }, (err, token) => {
+      // Sign the JWT token using the secret from the environment variable
+      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
         if (err) throw err;
-        
+
         // Respond with token and creation time
         res.json({
           token,          // Return the JWT token
@@ -87,7 +88,8 @@ router.post(
 
       const payload = { user: { id: user.id } };
 
-      jwt.sign(payload, 'yourSecretKey', { expiresIn: 360000 }, (err, token) => {
+      // Sign the JWT token using the secret from the environment variable
+      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
         if (err) throw err;
         res.json({ token });
       });
