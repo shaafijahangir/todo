@@ -129,8 +129,8 @@ git push heroku main
 ### 6. Set Up Environment Variables on Heroku
 Use the following commands to add your environment variables to Heroku:
 ```bash
-heroku config:set MONGO_URI=mongodb+srv://username:{password}@cluster.mongodb.net/todo-app
-heroku config:set JWT_SECRET=yourSecretKey
+heroku config:set MONGO_URI=
+heroku config:set JWT_SECRET=
 ```
 
 ## Technologies Used
