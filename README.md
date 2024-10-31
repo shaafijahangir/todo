@@ -64,7 +64,7 @@ npm install
 ### 3. Set Up Environment Variables
 In the `server` directory, create a `.env` file with the following contents:
 ```bash
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/todo-app?retryWrites=true
+MONGO_URI=
 JWT_SECRET=yourSecretKey
 PORT=5000
 ```
