@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';  // Use Navigate instead of Redirect
+import { Navigate } from 'react-router-dom'; 
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
