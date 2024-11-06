@@ -1,103 +1,78 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { check, validationResult } = require('express-validator');
 const User = require('../models/User');
 const router = express.Router();
-const config = require('config');
+const dotenv = require('dotenv');
+
+// Hardcode the JWT secret for now
+const JWT_SECRET = process.env.JWT_SECRET; // Make sure to use the same key here and in the login route
+console.log(JWT_SECRET);
 
 // Register a new user
-router.post(
-  '/register',
-  [
-    // Validation checks
-    check('username', 'Username is required').not().isEmpty(),
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Password must be at least 6 characters').isLength({ min: 6 })
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post('/register', async (req, res) => {
+  const { username, email, password } = req.body;
+  try {
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ msg: 'User already exists' });
     }
 
-    const { username, email, password } = req.body;
+    // Hash the password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    try {
-      let user = await User.findOne({ email });
-      if (user) {
-        return res.status(400).json({ msg: 'User already exists' });
-      }
+    // Create new user
+    user = new User({ username, email, password: hashedPassword });
 
-      // Hash the password before saving
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+    // Save the user to the database
+    await user.save();
 
-      // Create new user
-      user = new User({ username, email, password: hashedPassword });
+    // Prepare the JWT payload
+    const payload = { user: { id: user.id } };
 
-      // Save the user to the database
-      await user.save();
+    // Sign the JWT token
+    jwt.sign(payload, JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
+      if (err) throw err;
 
-      // Prepare the JWT payload
-      const payload = { user: { id: user.id } };
-
-      // Sign the JWT token using the secret from the environment variable
-      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
-        if (err) throw err;
-
-        // Respond with token and creation time
-        res.json({
-          token,          // Return the JWT token
-          createdAt: user.createdAt  // Return the timestamp of when the user was created
-        });
+      // Respond with token and creation time
+      res.json({
+        token,          // Return the JWT token
+        createdAt: user.createdAt  // Return the timestamp of when the user was created
       });
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
-    }
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
-);
+});
 
 // Login a user
-router.post(
-  '/login',
-  [
-    // Validation checks
-    check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Password is required').exists()
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ msg: 'Invalid Credentials!' });
     }
 
-    const { email, password } = req.body;
-
-    try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ msg: 'Invalid Credentials' });
-      }
-
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ msg: 'Invalid Credentials' });
-      }
-
-      const payload = { user: { id: user.id } };
-
-      // Sign the JWT token using the secret from the environment variable
-      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      });
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+    // Compare the plain password with the hashed password in the database
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: 'Invalid Credentials?' });
     }
+
+    const payload = { user: { id: user.id } };
+
+    // Sign the JWT token
+    jwt.sign(payload, JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
+      if (err) throw err;
+      res.json({ token });
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
-);
+});
 
 module.exports = router;
