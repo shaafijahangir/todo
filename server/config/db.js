@@ -6,6 +6,7 @@ dotenv.config();
 
 // Use the MONGO_URI from .env
 const db = process.env.MONGO_URI;
+console.log(db); 
 
 const connectDB = async () => {
   try {
