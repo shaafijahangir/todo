@@ -7,7 +7,6 @@ const dotenv = require('dotenv');
 
 // Hardcode the JWT secret for now
 const JWT_SECRET = process.env.JWT_SECRET; // Make sure to use the same key here and in the login route
-console.log(JWT_SECRET);
 
 // Register a new user
 router.post('/register', async (req, res) => {
