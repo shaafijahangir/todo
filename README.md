@@ -12,7 +12,7 @@ A full-stack to-do list application built using the MERN (MongoDB, Express, Reac
 * Protected routes to prevent unauthorized access to the dashboard
 * Backend API built with Node.js and Express.js
 * MongoDB database connection for task storage
-* Deployment-ready for Heroku
+* Deployment-ready for Render
 
 ## Project Structure
 ```
@@ -29,7 +29,6 @@ A full-stack to-do list application built using the MERN (MongoDB, Express, Reac
 │   ├── models           # Mongoose schemas (User, Task)
 │   ├── routes           # API routes (auth, tasks)
 │   └── server.js        # Main backend entry point
-├── Procfile             # Heroku process file for deployment
 ├── package.json         # Dependencies and scripts for the project
 └── README.md           # Project documentation
 ```
@@ -38,7 +37,7 @@ A full-stack to-do list application built using the MERN (MongoDB, Express, Reac
 Before you begin, ensure you have the following installed on your local machine:
 * Node.js
 * MongoDB
-* Heroku CLI
+* Git
 
 ## Installation and Setup
 
@@ -64,7 +63,7 @@ npm install
 ### 3. Set Up Environment Variables
 In the `server` directory, create a `.env` file with the following contents:
 ```bash
-MONGO_URI=
+MONGO_URI=mongodb+srv://username:<password>@cluster.mongodb.net/todo-app?retryWrites=true
 JWT_SECRET=yourSecretKey
 PORT=5000
 ```
@@ -96,41 +95,38 @@ The backend will run on `http://localhost:5000`, and the frontend will run on `h
 * PUT `/api/tasks/:id`: Update an existing task
 * DELETE `/api/tasks/:id`: Delete a task
 
-## Deployment to Heroku
+## Deployment to Render
 
-### 1. Install Heroku CLI
-```bash
-npm install -g heroku
-```
+### 1. Create a Render Account
+Sign up for a free account at [render.com](https://render.com)
 
-### 2. Create a Procfile
-In the root of the `server` directory, create a file called `Procfile`:
-```bash
-web: node server.js
-```
+### 2. Configure Backend Service
+1. Create a new Web Service
+2. Connect your GitHub repository
+3. Configure the service:
+   * Name: `todo-app-backend`
+   * Environment: `Node`
+   * Build Command: `npm install`
+   * Start Command: `node server.js`
+   * Add environment variables:
+     * `MONGO_URI`
+     * `JWT_SECRET`
 
-### 3. Login to Heroku
-```bash
-heroku login
-```
+### 3. Configure Frontend Static Site
+1. Create a new Static Site
+2. Connect your GitHub repository
+3. Configure the build:
+   * Build Command: `npm install && npm run build`
+   * Publish Directory: `build`
+   * Add environment variable:
+     * `REACT_APP_API_URL`: Your backend service URL
 
-### 4. Create a New Heroku App
-```bash
-heroku create
-```
-
-### 5. Push Code to Heroku
-```bash
-git add .
-git commit -m "Deploy to Heroku"
-git push heroku main
-```
-
-### 6. Set Up Environment Variables on Heroku
-Use the following commands to add your environment variables to Heroku:
-```bash
-heroku config:set MONGO_URI=
-heroku config:set JWT_SECRET=
+### 4. Update CORS Configuration
+In your backend `server.js`, update CORS to allow requests from your Render frontend domain:
+```javascript
+app.use(cors({
+  origin: 'https://your-frontend-url.render.com'
+}));
 ```
 
 ## Technologies Used
@@ -138,14 +134,14 @@ heroku config:set JWT_SECRET=
 * Backend: Node.js, Express.js, JWT (JSON Web Tokens)
 * Database: MongoDB (via Mongoose)
 * Authentication: JWT (JSON Web Tokens)
-* Hosting: Heroku
+* Hosting: Render
 
 ## Troubleshooting
 
 ### Common Issues
-* CORS errors: Make sure CORS is properly configured in your backend to allow requests from `localhost:3000` during development.
-* MongoDB connection errors: Double-check your MongoDB URI in your `.env` file.
-* Heroku errors: Ensure that all required environment variables are set using `heroku config:set`.
+* CORS errors: Make sure CORS is properly configured in your backend to allow requests from your Render frontend domain
+* MongoDB connection errors: Double-check your MongoDB URI in your environment variables
+* Render deployment errors: Ensure all required environment variables are set in your Render dashboard
 
 ## Future Improvements
 * Implement user profiles and task categories
